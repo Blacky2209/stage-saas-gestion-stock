@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from core.database import get_db
-from models import Tenant
+from models.models import Tenant 
 from schemas.tenant import TenantCreate, TenantResponse
-
 # On crée le "guichet" pour les tenants
 router = APIRouter(
     prefix="/tenants",

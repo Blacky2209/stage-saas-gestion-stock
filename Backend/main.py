@@ -166,7 +166,7 @@ def redirect_to_docs():
 app.include_router(tasks.router)'''
 
 
-from fastapi import FastAPI, Depends
+'''from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from core.database import get_db, engine
 from sqlalchemy import text # Pour tester une requête SQL brute
@@ -184,7 +184,7 @@ def test_db_connection(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
         return {"status": "Succès", "message": "Connexion BDD réussie ! 🟢"}
     except Exception as e:
-        return {"status": "Erreur", "message": f"Échec connexion : {str(e)} 🔴"}
+        return {"status": "Erreur", "message": f"Échec connexion : {str(e)} 🔴"}'''
 
 '''from fastapi import FastAPI
 
@@ -193,3 +193,44 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "Le Backend du SaaS GOMAHTECH est en ligne ! 🚀"}'''
+
+
+
+'''from fastapi import FastAPI
+from core.database import engine
+import models # On importe les modèles pour que la BDD les reconnaisse
+from routers import tenants # On importe ton nouveau router
+
+# 1. Cette ligne magique crée automatiquement les tables dans PostgreSQL
+# si elles n'existent pas encore (basé sur tes fichiers models.py)
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="GOMAHTECH Stock SaaS")
+
+# 2. On connecte le router des Tenants à l'application principale
+app.include_router(tenants.router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Bienvenue sur l'API SaaS Stock ! 🚀"}'''
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from core.database import engine, Base
+from models import models
+from routers import tenants, users, products, movements # <--- 1. AJOUTE movements
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="GOMAHTECH Stock SaaS")
+
+# ... (CORS ne change pas) ...
+
+app.include_router(tenants.router)
+app.include_router(users.router)
+app.include_router(products.router)
+app.include_router(movements.router) # <--- 2. AJOUTE LA ROUTE
+
+@app.get("/")
+def read_root():
+    return {"message": "Bienvenue sur l'API SaaS Stock ! 🚀"}
