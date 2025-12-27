@@ -226,6 +226,15 @@ app = FastAPI(title="GOMAHTECH Stock SaaS")
 
 # ... (CORS ne change pas) ...
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # <--- L'étoile magique : Tout le monde peut entrer !
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.include_router(tenants.router)
 app.include_router(users.router)
 app.include_router(products.router)
