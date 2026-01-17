@@ -243,3 +243,11 @@ app.include_router(movements.router) # <--- 2. AJOUTE LA ROUTE
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur l'API SaaS Stock ! 🚀"}
+
+@app.get("/anniv")
+def anniversaire():
+    return {"List_anniv": {"Fatou": "1990-01-01", "Lamine": "1992-02-02"}}
+
+@app.get("/anniv/Fatou")
+def anniversaire_fatou():
+    return {"message": "Joyeux anniversaire Fatou ! 🎉🎂"}
