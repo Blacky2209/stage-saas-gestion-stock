@@ -5,6 +5,7 @@ from sqlalchemy import extract
 
 from core.database import get_db
 from models.models import User, Event
+# IMPORTANT : On importe bien UserWithEvent ici
 from schemas import UserSchema, UserCreate, UserUpdate, UserWithEvent
 
 router = APIRouter(
@@ -12,10 +13,23 @@ router = APIRouter(
     tags=["Utilisateurs (Users)"]
 )
 
-# 1. LISTE DES USERS
-@router.get("/", response_model=List[UserSchema])
+# 1. LISTE DES USERS (Calcul pour tout le monde)
+# C'est cette route qui permet à ton filtre "Event" de marcher
+@router.get("/", response_model=List[UserWithEvent])
 def read_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
+    users = db.query(User).all()
+
+    # On attache l'événement à chaque utilisateur de la liste
+    for user in users:
+        event = db.query(Event).filter(
+            extract('month', Event.date) == extract('month', user.birthday),
+            extract('day', Event.date) == extract('day', user.birthday),
+            extract('year', Event.date) > extract('year', user.birthday)
+        ).order_by(Event.date).first()
+        
+        user.event = event
+
+    return users
 
 # 2. CRÉER UN USER
 @router.post("/", response_model=UserSchema)
@@ -56,26 +70,24 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
     db.refresh(db_user)
     return db_user
 
-# 5. LIRE UN SEUL USER (AVEC L'ÉVÉNEMENT)
+# 5. LIRE UN SEUL USER (Détails)
 @router.get("/{user_id}", response_model=UserWithEvent)
 def read_user(user_id: int, db: Session = Depends(get_db)):
-    # A. On cherche le user
     db_user = db.query(User).filter(User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
 
-    # --- MOUCHARD 1 ---
-    print(f"🔍 J'analyse l'utilisateur : {db_user.firstname} (Né le {db_user.birthday})")
-
-    # B. On cherche l'événement
-    # Rappel : Même Jour, Même Mois, Année > Année de naissance
+    # Recherche de l'événement (Logique identique à la liste)
     db_event = db.query(Event).filter(
         extract('month', Event.date) == extract('month', db_user.birthday),
         extract('day', Event.date) == extract('day', db_user.birthday),
         extract('year', Event.date) > extract('year', db_user.birthday)
     ).order_by(Event.date).first()
 
-    # C. On attache l'event au user
-    db_user.event = db_event
+    # Mouchard pour le debug (Optionnel)
+    if db_event:
+        # Attention : ici on utilise .event car c'est le nom de ta colonne SQL
+        print(f"✅ Event trouvé pour {db_user.firstname}: {db_event.event}")
     
+    db_user.event = db_event
     return db_user
